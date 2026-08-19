@@ -24,7 +24,8 @@ class Database:
                 guild_id INTEGER NOT NULL, user_id INTEGER NOT NULL,
                 messages INTEGER DEFAULT 0, words INTEGER DEFAULT 0,
                 roasts_received INTEGER DEFAULT 0, roasts_given INTEGER DEFAULT 0,
-                lore_level INTEGER DEFAULT 0, games_played INTEGER DEFAULT 0,
+                lore_level INTEGER DEFAULT 0, lore_count INTEGER DEFAULT 0,
+                last_lore_generation TEXT, games_played INTEGER DEFAULT 0,
                 experiments INTEGER DEFAULT 0, fortunes INTEGER DEFAULT 0,
                 PRIMARY KEY (guild_id, user_id)
             );
@@ -44,6 +45,14 @@ class Database:
             );
             """
         )
+        existing_columns = {
+            row["name"]
+            for row in self.connection.execute("PRAGMA table_info(user_stats)").fetchall()
+        }
+        if "lore_count" not in existing_columns:
+            self.connection.execute("ALTER TABLE user_stats ADD COLUMN lore_count INTEGER DEFAULT 0")
+        if "last_lore_generation" not in existing_columns:
+            self.connection.execute("ALTER TABLE user_stats ADD COLUMN last_lore_generation TEXT")
         self.connection.commit()
 
     def _ensure_user(self, guild_id: int, user_id: int) -> None:
@@ -100,6 +109,23 @@ class Database:
             "SELECT * FROM user_stats WHERE guild_id = ? AND user_id = ?",
             (guild_id, user_id),
         ).fetchone()
+
+    def record_lore(self, guild_id: int, user_id: int) -> sqlite3.Row:
+        self._ensure_user(guild_id, user_id)
+        current = self.connection.execute(
+            "SELECT lore_level, lore_count FROM user_stats WHERE guild_id = ? AND user_id = ?",
+            (guild_id, user_id),
+        ).fetchone()
+        next_level = min(100, max(1, int(current["lore_level"]) + 1))
+        self.connection.execute(
+            """UPDATE user_stats
+               SET lore_level = ?, lore_count = lore_count + 1,
+                   last_lore_generation = ?
+               WHERE guild_id = ? AND user_id = ?""",
+            (next_level, datetime.now(timezone.utc).isoformat(), guild_id, user_id),
+        )
+        self.connection.commit()
+        return self.user(guild_id, user_id)
 
     def top(self, guild_id: int, field: str, limit: int = 1) -> list[sqlite3.Row]:
         if field not in {"messages", "words", "roasts_received", "roasts_given", "games_played"}:

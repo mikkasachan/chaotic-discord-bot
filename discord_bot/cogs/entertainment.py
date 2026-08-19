@@ -8,13 +8,6 @@ from discord.ext import commands
 
 from ..utils import clamp_text, embed, member_name, pick
 
-LORE = (
-    "once challenged a vending machine to a duel and won a single grape.",
-    "was secretly trained by pigeons in the ancient art of dramatic entrances.",
-    "has a recurring rivalry with a staircase.",
-    "is legally considered a side quest by at least two nearby ducks.",
-    "discovered a new emotion while trying to open a stubborn jar.",
-)
 FORTUNES = (
     "A suspiciously good snack is approaching.",
     "You will say 'one more episode' and unlock a new timezone.",
@@ -42,16 +35,6 @@ class Entertainment(commands.Cog):
         case.add_field(name="Defense", value=pick(("My client was lagging.", "They plead silly.", "No comment, only snacks.")), inline=False)
         case.add_field(name="Verdict", value=f"**{verdict}**", inline=False)
         await interaction.response.send_message(embed=case)
-
-    @app_commands.command(name="lore", description="Generate evolving fictional lore for a member.")
-    @app_commands.describe(member="Whose lore should become dangerously specific?")
-    async def lore(self, interaction: discord.Interaction, member: discord.Member) -> None:
-        self.bot.db.bump_user(interaction.guild_id, member.id, lore_level=1)
-        stats = self.bot.db.user(interaction.guild_id, member.id)
-        level = stats["lore_level"]
-        await interaction.response.send_message(
-            embed(f"📜 Member Lore: {member_name(member)}", f"**Lore Level {level}**\n\n{member_name(member)} {pick(LORE)}\n\nThe canon is expanding. Nobody can stop it.", "purple")
-        )
 
     @app_commands.command(name="fortune", description="Get a funny fortune for a member.")
     @app_commands.describe(member="The chosen one")
