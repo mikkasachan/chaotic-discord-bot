@@ -18,7 +18,11 @@ class Core(commands.Cog):
     @app_commands.command(name="ping", description="Check if ChaosBot is alive.")
     async def ping(self, interaction: discord.Interaction) -> None:
         await interaction.response.send_message(
-            embed("🏓 Pong!", f"Chaos latency: `{round(self.bot.latency * 1000)}ms`\nThe creature lives.", "green")
+            embed=embed(
+                "🏓 Pong!",
+                f"Chaos latency: `{round(self.bot.latency * 1000)}ms`\nThe creature lives.",
+                "green",
+            )
         )
 
     @app_commands.command(name="help", description="See the ChaosBot command menu.")
