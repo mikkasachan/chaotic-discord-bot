@@ -47,3 +47,8 @@ Thumbs.db
 # Replit
 .cache/
 .local/
+
+# Python bot runtime
+__pycache__/
+*.py[cod]
+discord_bot/data/
