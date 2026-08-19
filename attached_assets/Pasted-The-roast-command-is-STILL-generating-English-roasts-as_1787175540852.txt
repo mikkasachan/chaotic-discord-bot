@@ -1,0 +1,70 @@
+The /roast command is STILL generating English roasts, as shown by the latest 3:07 AM test.
+
+Fix this properly.
+
+IMPORTANT:
+Do NOT merely add a few Hindi templates while keeping the existing English templates.
+REMOVE/REPLACE the old English roast template pool so normal /roast responses are Hindi/Hinglish.
+
+Requirements:
+
+1. Inspect discord_bot/cogs/roast.py and find the actual template/data source used at runtime by /roast.
+
+2. Replace the existing English roast pool with a large Hindi/Hinglish Gen-Z roast pool.
+
+3. The generated roast itself should normally be in natural Hinglish, for example:
+   - "Bhai teri aura itni low hai ki Wi-Fi bhi tujhe connect karne se pehle sochta hai."
+   - "Tera confidence 4K hai, skills 144p."
+   - "Bhai tu itna NPC hai ki dialogue options bhi tujhe ignore kar rahe hain."
+   - "Teri planning dekh ke Google Maps bhi bolta hai: bhai khud dekh le."
+   - "Tu group chat ka woh banda hai jiska message padh ke sab notification clear kar dete hain."
+
+4. Keep English internet/Gen-Z words where they naturally fit:
+   aura, NPC, skill issue, loading, Wi-Fi, braincells, etc.
+   But the SENTENCE should primarily feel Hindi/Hinglish.
+
+5. Make at least 40 varied Hindi/Hinglish roast templates.
+   Avoid simple literal translations.
+
+6. IMPORTANT: The roast should NOT include:
+   "@user has been roasted"
+   or
+   "X has been roasted"
+
+7. Keep the existing:
+   - /roast command
+   - proper Discord Embed
+   - aura score
+   - braincells/status
+   - footer
+   - 8-second per-user cooldown
+   - self-roast handling
+   - bot-roast handling
+   - safety restrictions
+
+8. Do not modify any other bot feature.
+
+TESTING:
+After changing the code:
+
+- Compile the project.
+- Restart the bot.
+- Confirm it connects to Discord.
+- Confirm slash commands sync.
+- Run /roast multiple times (at least 5 times).
+- Verify the NEW responses are actually Hindi/Hinglish.
+- Verify no old English template is being selected.
+- Verify /ping still works.
+- If there is any caching/import issue, fix it and restart the bot again.
+
+Do not claim this is fixed unless the actual runtime /roast responses are Hindi/Hinglish.
+
+Only after successful testing, create a checkpoint.
+
+In your final response, explicitly list:
+- where the runtime roast templates are stored
+- how many templates are present
+- whether old English templates were removed
+- examples of the actual tested Hindi/Hinglish outputs
+- whether the bot restarted successfully
+- checkpoint status
