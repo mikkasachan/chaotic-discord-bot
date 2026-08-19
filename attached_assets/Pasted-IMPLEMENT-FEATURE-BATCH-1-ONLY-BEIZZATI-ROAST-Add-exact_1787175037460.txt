@@ -1,0 +1,90 @@
+IMPLEMENT FEATURE BATCH #1 ONLY: BEIZZATI / ROAST
+
+Add exactly ONE new entertainment feature to the existing Discord bot:
+
+COMMAND:
+ /roast @user
+
+PURPOSE:
+A harmless, funny, Gen-Z style roast generator for members.
+
+IMPORTANT:
+Do NOT implement any other planned feature.
+Do NOT modify unrelated existing commands.
+Do NOT rewrite the existing bot architecture.
+Do NOT remove or reset any existing database data.
+
+FUNCTIONAL REQUIREMENTS:
+
+1. Create a modular cog/module specifically for the roast feature.
+
+2. Add the slash command:
+   /roast user:@member
+
+3. The bot should generate a random, funny and harmless roast for the selected member.
+
+4. Roasts should feel varied and not repeat the same line constantly.
+
+5. Use a collection of roast templates with randomized combinations where practical.
+
+6. Roasts can use Gen-Z/internet humor such as:
+   - aura
+   - NPC
+   - yapper
+   - skill issue
+   - bro
+   - main character
+   - Wi-Fi/router jokes
+   - brainrot
+   - side character
+   - loading screen
+   - etc.
+
+7. Keep the humor playful.
+   Do NOT generate:
+   - slurs
+   - hate speech
+   - threats
+   - sexual harassment
+   - targeted abuse
+   - jokes about protected characteristics
+   - encouragement of self-harm
+   - real-world violence
+
+8. The bot should never roast the user in a genuinely hateful or threatening way.
+
+9. If someone tries to roast the bot itself, optionally allow:
+   /roast @bot
+   and give a funny response such as the bot roasting itself or the requester.
+
+10. Prevent the bot from roasting itself endlessly or creating loops.
+
+11. Use a Discord Embed for the response.
+
+Example style:
+
+🔥 BEIZZATI.exe
+
+@User has been roasted.
+
+"Bro has so little aura even the loading screen skipped him."
+
+💀 Aura: -37
+🧠 Braincells: Currently buffering...
+
+Make the exact formatting varied so every response doesn't look identical.
+
+12. Add a small cooldown to prevent spam.
+The cooldown should be reasonable and should not affect other commands.
+
+13. Handle invalid/self-target cases gracefully with a funny response.
+
+14. Do not store full message histories just for this feature.
+If statistics are not necessary, do not add unnecessary database storage.
+
+TESTING REQUIREMENTS:
+
+After implementing the feature:
+
+1. Run Python compilation/static checks.
+2. Start

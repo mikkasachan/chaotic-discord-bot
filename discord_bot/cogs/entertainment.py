@@ -8,14 +8,6 @@ from discord.ext import commands
 
 from ..utils import clamp_text, embed, member_name, pick
 
-ROASTS = (
-    "has the Wi-Fi signal strength of a wet sock.",
-    "is proof that autocorrect can only do so much.",
-    "walks into a room and the group chat gets quieter.",
-    "has main-character confidence and background-NPC decision making.",
-    "could lose an argument to a loading screen.",
-    "is running on three brain cells and they are all buffering.",
-)
 LORE = (
     "once challenged a vending machine to a duel and won a single grape.",
     "was secretly trained by pigeons in the ancient art of dramatic entrances.",
@@ -35,20 +27,6 @@ FORTUNES = (
 class Entertainment(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
-
-    @app_commands.command(name="roast", description="Give a member a harmless, randomized roast.")
-    @app_commands.describe(member="The brave volunteer")
-    async def roast(self, interaction: discord.Interaction, member: discord.Member) -> None:
-        if member.bot:
-            line = "is a bot. The roast is already built into the firmware."
-        else:
-            line = pick(ROASTS)
-        self.bot.db.bump_user(interaction.guild_id, member.id, roasts_received=1)
-        self.bot.db.bump_user(interaction.guild_id, interaction.user.id, roasts_given=1)
-        self.bot.db.bump_guild(interaction.guild_id, roasts=1)
-        await interaction.response.send_message(
-            embed("🔥 Beizzati Department", f"**{member_name(member)}** {line}\n\nNo feelings were harmed. Probably.", "red")
-        )
 
     @app_commands.command(name="court", description="Put two members on trial for imaginary crimes.")
     @app_commands.describe(accused="The accused", witness="The alleged accomplice or witness")

@@ -11,6 +11,7 @@ from .db import Database
 
 COGS = (
     "discord_bot.cogs.core",
+        "discord_bot.cogs.roast",
     "discord_bot.cogs.entertainment",
     "discord_bot.cogs.games",
     "discord_bot.cogs.chaos",
