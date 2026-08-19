@@ -1,0 +1,111 @@
+IMPORTANT DEVELOPMENT WORKFLOW — FOLLOW THIS FOR THE ENTIRE PROJECT
+
+We are building a Discord entertainment bot in small, independent feature batches.
+
+The bot is already connected to Discord and /ping is working correctly.
+
+DO NOT implement all remaining features at once.
+
+We will add features in small batches and verify each batch before moving to the next one.
+
+CORE RULE:
+Every feature must be independently complete and usable before starting another feature.
+
+For EVERY feature/batch, follow this exact workflow:
+
+1. Inspect the existing project before making changes.
+2. Do NOT rewrite or replace working code unnecessarily.
+3. Implement ONLY the feature(s) I requested in the current message.
+4. Keep existing commands fully functional.
+5. If a new feature needs database tables, create migrations/initialization safely without destroying existing data.
+6. If a feature needs new configuration, add it through environment variables/configuration rather than hardcoding secrets.
+7. Handle errors gracefully so one command failing cannot crash the entire bot.
+8. Keep commands modular and isolated.
+9. Avoid long-running loops unless they are genuinely required.
+10. Avoid unnecessary API calls and unnecessary background tasks because the bot will initially run on limited Replit resources.
+11. After implementation, run Python compilation/static checks.
+12. Start/restart the Discord bot.
+13. Verify that the bot connects successfully to Discord.
+14. Verify that all previously completed slash commands still register successfully.
+15. Verify the newly implemented command(s).
+16. Fix any errors found during verification.
+17. Only after the current feature is working, create a checkpoint/save point.
+18. In your final response, clearly state:
+    - What was added
+    - Which files were changed
+    - Which commands are now working
+    - What was tested
+    - Whether the bot successfully connected to Discord
+    - Any remaining limitations
+
+VERY IMPORTANT:
+If your execution/task limit is approaching, DO NOT start another feature.
+
+Instead:
+- Finish the current feature cleanly.
+- Save all working code.
+- Run compilation/static checks.
+- Restart and verify the bot.
+- Create a checkpoint.
+- Stop there.
+- Tell me exactly what is complete and what remains.
+
+NEVER leave partially implemented commands registered as working commands.
+
+If a feature cannot be completed safely within the current task, do not fake completion. Keep the existing bot stable and tell me what remains.
+
+DATABASE SAFETY:
+- Never delete or reset existing user/game data.
+- Use CREATE TABLE IF NOT EXISTS or safe migrations.
+- Database initialization must be idempotent.
+- Restarting the bot must not erase data.
+- Never store the Discord bot token in the database.
+
+DISCORD SAFETY:
+- Never request or use Administrator permission.
+- Never implement destructive server actions unless explicitly requested.
+- Do not ban/kick/delete channels/delete messages as part of entertainment features.
+- Keep all games and fun features harmless.
+- Use proper Discord interaction response methods and embeds.
+- Do not stringify Discord Embed objects.
+
+ARCHITECTURE:
+Keep the project modular using cogs/modules.
+Do not put every feature into one huge Python file.
+Shared utilities should be reusable.
+Keep database logic separate from command logic where practical.
+
+TESTING:
+After every feature batch, make sure:
+- Python compilation passes.
+- Bot starts.
+- Bot connects to Discord.
+- Slash commands sync successfully.
+- Existing commands still work.
+- New commands work.
+
+REPLIT RESOURCE AWARENESS:
+The bot must be lightweight.
+Do not create unnecessary polling systems.
+Do not create multiple duplicate background tasks after every restart.
+Use Discord events instead of constant polling whenever possible.
+Avoid memory leaks and unbounded in-memory lists.
+Use SQLite for persistent data where appropriate.
+
+DEPLOYMENT:
+The project should remain portable.
+Do not make the code dependent on a specific Replit-only feature unless absolutely necessary.
+Keep the Discord token in Replit Secrets/environment variables.
+The bot should be easy to move later to another always-on host without rewriting the application.
+
+CURRENT STATUS:
+- Discord connection: WORKING
+- /ping: WORKING
+- Embed response issue: FIXED
+- Slash command registration: WORKING
+- SQLite/database foundation: ALREADY CREATED
+- Modular architecture: ALREADY CREATED
+
+Do not change the above working foundation unless there is a real bug that requires it.
+
+WAIT FOR MY NEXT FEATURE REQUEST.
