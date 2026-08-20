@@ -113,7 +113,7 @@ class Roast(commands.Cog):
         braincells = random.choice(("Currently buffering...", "On airplane mode.", "One is doing its best.", "Out for maintenance."))
         response = embed(
             "🔥 BEIZZATI.exe",
-            f"“{roast}”\n\n"
+            f"<@{user.id}>: “{roast}”\n\n"
             f"💀 **Aura:** `{aura}`\n"
             f"🧠 **Braincells:** {braincells}\n\n"
             f"*{random.choice(TAILS)}*",

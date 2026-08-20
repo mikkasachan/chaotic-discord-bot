@@ -14,6 +14,7 @@ COGS = (
         "discord_bot.cogs.roast",
         "discord_bot.cogs.kalesh",
         "discord_bot.cogs.lore",
+        "discord_bot.cogs.experiment",
     "discord_bot.cogs.entertainment",
     "discord_bot.cogs.games",
     "discord_bot.cogs.chaos",

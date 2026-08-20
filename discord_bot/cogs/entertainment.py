@@ -45,13 +45,6 @@ class Entertainment(commands.Cog):
             embed("🔮 Kismat.exe", f"**{member_name(target)}:** {pick(FORTUNES)}\n\nConfidence: `{random.randint(11, 99)}%`", "blue")
         )
 
-    @app_commands.command(name="experiment", description="Generate a harmless server experiment.")
-    async def experiment(self, interaction: discord.Interaction) -> None:
-        self.bot.db.bump_user(interaction.guild_id, interaction.user.id, experiments=1)
-        subjects = pick(("the next person who types", "three volunteers", "the most suspicious profile picture", "everyone currently online"))
-        task = pick(("must communicate using only food names for 60 seconds", "gets a ceremonial title chosen by the group", "must defend an obviously wrong opinion", "has to invent a new holiday"))
-        await interaction.response.send_message(embed("🧪 Random Experiment", f"**Subjects:** {subjects}\n**Protocol:** {task}\n**Safety rating:** harmlessly unhinged", "green"))
-
     @app_commands.command(name="rate", description="Submit anything for an arbitrary funny rating.")
     @app_commands.describe(thing="What is being judged?")
     async def rate(self, interaction: discord.Interaction, thing: str) -> None:
