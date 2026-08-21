@@ -1,0 +1,217 @@
+from __future__ import annotations
+import asyncio
+import random
+from dataclasses import dataclass, field
+import discord
+from discord import app_commands
+from discord.ext import commands
+
+@dataclass
+class SurviveGame:
+    host_id: int
+    players: dict[int, str] = field(default_factory=dict)
+    alive: set[int] = field(default_factory=set)
+    started: bool = False
+    round_no: int = 0
+    choices: dict[int, int] = field(default_factory=dict)
+    timer_task: asyncio.Task | None = None
+    used_situations: set = field(default_factory=set)
+
+SITUATIONS = (
+    "🌪️ A massive tornado approaches. What do you do?",
+    "🌊 A giant wave is coming. What is your move?",
+    "👾 A mysterious creature appears. Choose quickly.",
+    "🔥 The building catches fire. Pick your survival plan.",
+    "⚡ A massive electrical storm hits the arena.",
+)
+
+CHOICES = (
+    ("🏠", "Hide"),
+    ("🏃", "Run"),
+    ("🧱", "Build"),
+)
+
+
+
+GENERATOR_PLACES = ['ek andhera jungle', 'ek sunsaan sadak', 'ek purani factory', 'ek band pada railway station', 'ek gehri gufa', 'ek sunsaan island', 'ek purana mahal', 'ek toota hua bridge', 'ek abandoned city', 'ek ghana pahadi ilaaka', 'ek underground tunnel', 'ek purani laboratory', 'ek sunsaan warehouse', 'ek jungle camp', 'ek barfili pahaadi', 'ek purana mine', 'ek andhera basement', 'ek sunsaan village', 'ek khali hospital', 'ek samundar ke paas sunsaan jagah']
+GENERATOR_DANGERS = ['ek khatarnak jaanwar tumhari taraf badh raha hai', 'tez aag tumhare aas-paas fail rahi hai', 'poori jagah achanak hilne lagi hai', 'ek zehreeli gas hawa mein phail rahi hai', 'ek bada blast hone wala hai', 'raasta dheere-dheere band ho raha hai', 'kuch ajeeb tumhara peecha kar raha hai', 'bahut tez baarish aur aandhi aa rahi hai', 'zameen tumhare pairon ke neeche toot rahi hai', 'ek unknown awaaz tumhare bilkul paas aa rahi hai', 'paani ka level tezi se badh raha hai', 'ek dangerous trap activate ho gaya hai', 'poori building girne wali hai', 'bijli ka system control se bahar ho gaya hai', 'bahar kuch log tumhe dhoondh rahe hain', 'ek massive storm tumhari taraf aa raha hai', 'oxygen bahut tezi se kam ho rahi hai', 'tumhare aas-paas ki lights ek-ek karke band ho rahi hain', 'ek mysterious creature nazar aa raha hai', 'tumhare paas sirf kuch hi seconds bache hain']
+GENERATOR_TWISTS = ['tumhare paas sirf kuch seconds hain', 'jo raasta safe lag raha hai wahi galat ho sakta hai', 'sabko ek ajeeb awaaz sunai de rahi hai', 'koi bhi nahi jaanta ki agle darwaze ke peeche kya hai', 'ek option doosre options se kaafi zyada risky lag raha hai', 'situation har kuch seconds mein badal rahi hai', 'tumhari supplies lagbhag khatam ho chuki hain', 'escape ka raasta achanak band ho gaya', 'koi tumhe paas se observe kar raha hai', 'tumhe situation aur kharab hone se pehle decision lena hoga', 'jo cheez tumhe help kar sakti thi woh achanak gayab ho gayi', 'tumhare paas sirf ek chance bacha hai', 'kuch aisa hone wala hai jiska tumhe bilkul idea nahi hai', 'peeche lautna ab possible nahi hai', 'har second ke saath danger badhta ja raha hai']
+
+SITUATION_CHOICES = [
+    ([("🚪","Escape"),("🔍","Search"),("🏠","Hide")],"gufa"),
+    ([("🧗","Climb"),("🏃","Run"),("⚔️","Fight")],"jungle"),
+    ([("🚪","Exit"),("🧱","Build"),("🛡️","Protect")],"building"),
+    ([("🌊","Swim"),("🛟","Float"),("🤿","Dive")],"water"),
+    ([("🧠","Plan"),("🤝","Team"),("💨","Sprint")],"danger")
+]
+
+GENERATOR_ACTIONS = [("🏃", "Escape"), ("🛡️", "Defend"), ("🕵️", "Investigate"), ("🏠", "Hide"), ("🧗", "Climb"), ("🚪", "Find Exit"), ("🧰", "Build"), ("🤝", "Team Up"), ("💨", "Sprint"), ("🧠", "Plan")]
+
+def generate_situation(used):
+    for _ in range(200):
+        place=random.choice(GENERATOR_PLACES)
+        danger=random.choice(GENERATOR_DANGERS)
+        twist=random.choice(GENERATOR_TWISTS)
+        actions = _get_smart_choices(place, danger, twist)
+        key=(place,danger,twist,tuple(a[1] for a in actions))
+        if key not in used:
+            used.add(key)
+            text=f"📍 You are trapped in a **{place}**. **{danger.capitalize()}** is closing in — {twist}."
+            return text, actions
+    used.clear()
+    return generate_situation(used)
+
+class LobbyView(discord.ui.View):
+    def __init__(self, cog, guild_id):
+        super().__init__(timeout=600)
+        self.cog = cog
+        self.guild_id = guild_id
+
+    @discord.ui.button(label="JOIN", emoji="👍🏻", style=discord.ButtonStyle.success)
+    async def join(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await self.cog.join(interaction, self.guild_id)
+
+    @discord.ui.button(label="REFUSE", emoji="👎🏻", style=discord.ButtonStyle.danger)
+    async def refuse(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await self.cog.refuse(interaction, self.guild_id)
+
+    @discord.ui.button(label="START GAME", emoji="🎮", style=discord.ButtonStyle.primary)
+    async def start(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await self.cog.start_game(interaction, self.guild_id)
+
+class ChoiceView(discord.ui.View):
+    def __init__(self, cog, guild_id, round_no, choices):
+        super().__init__(timeout=45)
+        self.cog = cog
+        self.guild_id = guild_id
+        self.round_no = round_no
+        self.choices = choices
+        for i, (emoji, label) in enumerate(choices):
+            button = discord.ui.Button(label=label, emoji=emoji, style=discord.ButtonStyle.primary)
+            button.callback = self.make_callback(i)
+            self.add_item(button)
+
+    def make_callback(self, choice):
+        async def callback(interaction):
+            await self.cog.choose(interaction, self.guild_id, self.round_no, choice)
+        return callback
+
+class Survive(commands.Cog):
+    def __init__(self, bot):
+        self.bot = bot
+        self.games = {}
+
+    @app_commands.command(name="survive", description="Start a survival game.")
+    @app_commands.describe(action="Start the game")
+    @app_commands.choices(action=[app_commands.Choice(name="start", value="start")])
+    async def survive(self, interaction: discord.Interaction, action: app_commands.Choice[str]):
+        if not interaction.guild:
+            return await interaction.response.send_message("Server only.", ephemeral=True)
+        gid = interaction.guild.id
+        if gid in self.games:
+            return await interaction.response.send_message("A SURVIVE game is already active here.", ephemeral=True)
+        game = SurviveGame(host_id=interaction.user.id)
+        game.players[interaction.user.id] = interaction.user.display_name
+        self.games[gid] = game
+        embed = self.lobby_embed(game)
+        await interaction.response.send_message(embed=embed, view=LobbyView(self, gid))
+
+    def lobby_embed(self, game):
+        names = "\n".join(f"• {name}" for name in game.players.values())
+        return discord.Embed(title="🏃 SURVIVE", description=f"**Players ({len(game.players)}/30):**\n{names}\n\nNeed **3–30 players**.\n\n👍🏻 JOIN to enter\n👎🏻 REFUSE to leave\n🎮 Only the host can start.", color=discord.Color.green())
+
+    async def join(self, interaction, gid):
+        game = self.games.get(gid)
+        if not game or game.started:
+            return await interaction.response.send_message("Lobby is closed.", ephemeral=True)
+        if interaction.user.id in game.players:
+            return await interaction.response.send_message("You already joined.", ephemeral=True)
+        if len(game.players) >= 30:
+            return await interaction.response.send_message("Game is full.", ephemeral=True)
+        game.players[interaction.user.id] = interaction.user.display_name
+        await interaction.response.send_message("👍🏻 Joined!", ephemeral=True)
+        await interaction.message.edit(embed=self.lobby_embed(game))
+
+    async def refuse(self, interaction, gid):
+        game = self.games.get(gid)
+        if not game or game.started:
+            return await interaction.response.send_message("Lobby is closed.", ephemeral=True)
+        if interaction.user.id == game.host_id:
+            self.games.pop(gid, None)
+            return await interaction.response.send_message("Lobby cancelled.", ephemeral=True)
+        game.players.pop(interaction.user.id, None)
+        await interaction.response.send_message("👎🏻 Refused.", ephemeral=True)
+        await interaction.message.edit(embed=self.lobby_embed(game))
+
+    async def start_game(self, interaction, gid):
+        game = self.games.get(gid)
+        if not game:
+            return await interaction.response.send_message("No active lobby.", ephemeral=True)
+        if interaction.user.id != game.host_id:
+            return await interaction.response.send_message("Only the host can start.", ephemeral=True)
+        if len(game.players) < 2:
+            return await interaction.response.send_message(f"Need at least 3 players. Current: {len(game.players)}.", ephemeral=True)
+        game.started = True
+        game.alive = set(game.players)
+        await interaction.response.send_message("🔥 **SURVIVE BEGINS!**", ephemeral=False)
+        await self.new_round(interaction.channel, game)
+
+    async def new_round(self, channel, game):
+        if len(game.alive) <= 1:
+            return await self.finish(channel, game)
+        game.round_no += 1
+        game.choices.clear()
+        situation, round_choices = generate_situation(game.used_situations)
+        embed = discord.Embed(title=f"🎯 ROUND {game.round_no}", description=f"**{situation}**\n\nChoose ONE button below.\n🔒 Your choice is private.\n⏱️ **45 seconds**\n\n👥 Alive: **{len(game.alive)}**", color=discord.Color.blurple())
+        await channel.send(embed=embed, view=ChoiceView(self, channel.guild.id, game.round_no, round_choices))
+        game.timer_task = asyncio.create_task(self.timer(channel, game))
+
+    async def choose(self, interaction, gid, round_no, choice):
+        game = self.games.get(gid)
+        if not game or not game.started or game.round_no != round_no:
+            return await interaction.response.send_message("This round is over.", ephemeral=True)
+        uid = interaction.user.id
+        if uid not in game.alive:
+            return await interaction.response.send_message("You are eliminated.", ephemeral=True)
+        if uid in game.choices:
+            return await interaction.response.send_message("You already chose!", ephemeral=True)
+        game.choices[uid] = choice
+        await interaction.response.send_message(f"🔒 Locked: **{CHOICES[choice][0]} {CHOICES[choice][1]}**", ephemeral=True)
+        if len(game.choices) == len(game.alive):
+            if game.timer_task:
+                game.timer_task.cancel()
+            await self.resolve(channel=interaction.channel, game=game)
+
+    async def timer(self, channel, game):
+        await asyncio.sleep(45)
+        await self.resolve(channel, game)
+
+    async def resolve(self, channel, game):
+        if not game.started:
+            return
+        losers = set()
+        for uid in game.alive:
+            if uid not in game.choices or random.random() < 0.30:
+                losers.add(uid)
+        if len(losers) >= len(game.alive):
+            losers.remove(random.choice(tuple(losers)))
+        game.alive -= losers
+        names = ", ".join(game.players[uid] for uid in losers) or "Nobody"
+        embed = discord.Embed(title=f"💥 ROUND {game.round_no} RESULT", description=f"❌ Eliminated: **{names}**\n\n👥 Remaining: **{len(game.alive)}**", color=discord.Color.red())
+        await channel.send(embed=embed)
+        if len(game.alive) <= 1:
+            await self.finish(channel, game)
+        else:
+            await self.new_round(channel, game)
+
+    async def finish(self, channel, game):
+        game.started = False
+        winner = next(iter(game.alive), None)
+        name = game.players[winner] if winner else "Nobody"
+        embed = discord.Embed(title="🏆 SURVIVOR WINNER", description=f"**{name}** is the LAST SURVIVOR! 🎉", color=discord.Color.gold())
+        await channel.send(embed=embed)
+        if channel.guild:
+            self.games.pop(channel.guild.id, None)
+
+async def setup(bot):
+    await bot.add_cog(Survive(bot))

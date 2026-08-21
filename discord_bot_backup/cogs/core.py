@@ -40,5 +40,29 @@ class Core(commands.Cog):
         if message.author.bot or not message.guild:
             return
         words = len(message.content.split())
+        self.bot.db.record_message(message.guild.id, message.author.id, words)
+        settings = self.bot.settings
+        if (
+            len(message.content) >= settings.who_asked_min_length
+            and self.bot.db.setting(message.guild.id)
+            and time.monotonic() - self.last_who_asked[message.guild.id] >= settings.who_asked_cooldown
+        ):
+            self.last_who_asked[message.guild.id] = time.monotonic()
+            if len(message.mentions) <= 6:
+                await message.channel.send(
+                    f"**Who asked?** {pick(['the paragraph department is concerned', 'bestie this is a TED Talk', 'the yap economy is booming'])}."
+                )
+
+    @app_commands.command(name="whoasked", description="Toggle the low-frequency long-message detector.")
+    @app_commands.describe(enabled="Whether to react to very long messages")
+    async def whoasked(self, interaction: discord.Interaction, enabled: bool) -> None:
+        if not interaction.guild:
+            return await interaction.response.send_message("This only works in a server.", ephemeral=True)
+        self.bot.db.set_setting(interaction.guild.id, enabled)
+        await interaction.response.send_message(
+            embed("Who Asked settings", f"Long-message reactions are now **{'on' if enabled else 'off'}**.", "blue")
+        )
+
+
 async def setup(bot: commands.Bot) -> None:
     await bot.add_cog(Core(bot))

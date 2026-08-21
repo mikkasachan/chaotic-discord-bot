@@ -10,18 +10,16 @@ from .config import load_settings
 from .db import Database
 
 COGS = (
-    "discord_bot.cogs.survive",
-    "discord_bot.cogs.ai",
     "discord_bot.cogs.core",
         "discord_bot.cogs.roast",
         "discord_bot.cogs.kalesh",
         "discord_bot.cogs.lore",
         "discord_bot.cogs.experiment",
     "discord_bot.cogs.entertainment",
+    "discord_bot.cogs.games",
     "discord_bot.cogs.kismat",
     "discord_bot.cogs.chaos",
-    "discord_bot.cogs.yap",
-"discord_bot.cogs.ship",)
+)
 
 
 class ChaosBot(commands.Bot):
@@ -33,9 +31,7 @@ class ChaosBot(commands.Bot):
 
     async def setup_hook(self) -> None:
         for cog in COGS:
-            print("LOADING COG:", cog)
             await self.load_extension(cog)
-            print("LOADED COG:", cog)
         synced = await self.tree.sync()
         logging.getLogger(__name__).info("Synced %d slash commands", len(synced))
 

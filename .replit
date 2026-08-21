@@ -1,43 +1,8 @@
-modules = ["nodejs-24", "python-base-3.13"]
+run = "python -m discord_bot"
+modules = ["python-3.11"]
 
 [deployment]
-router = "application"
-deploymentTarget = "autoscale"
-
-[deployment.postBuild]
-args = ["pnpm", "store", "prune"]
-env = { "CI" = "true" }
-
-[workflows]
-runButton = "Project"
-
-[[workflows.workflow]]
-name = "Project"
-mode = "parallel"
-author = "agent"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "Discord Entertainment Bot"
-
-[[workflows.workflow]]
-name = "Discord Entertainment Bot"
-author = "agent"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "python -m discord_bot"
-
-[workflows.workflow.metadata]
-outputType = "console"
-
-[agent]
-stack = "PNPM_WORKSPACE"
-expertMode = true
-
-[postMerge]
-path = "scripts/post-merge.sh"
-timeoutMs = 20000
+deploymentTarget = "cloudrun"
+run = "python -m discord_bot"
 
 [nix]
-channel = "stable-25_05"
